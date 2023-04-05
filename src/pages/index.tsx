@@ -22,10 +22,10 @@ export default function Home (): JSX.Element {
   const bggIds = params.get('bggIds') ?? ''
   const omitUnviable = params.has('omitUnviable')
 
-  const [ratingType, setRtype] = useState(RatingType.absolute)
   const [num, setNum] = useState(4)
   const { data: rating, isLoading: isLoadingRating } = useSWR(`/api/rating?${omitUnviable ? 'omitUnviable&' : ''}bggIds=${bggIds}`, fetcher)
   const { data: gamesDict, isLoading: isLoadingGames } = useSWR(`/api/game/all?dict=1&bggIds=${bggIds}`, fetcher)
+  const [ratingType, setRtype] = useState(RatingType.absolute)
 
   const isLoading = isLoadingRating || isLoadingGames
 
@@ -57,6 +57,7 @@ export default function Home (): JSX.Element {
           </button>
         </div>
         <div className='button-container'>
+          <span className='button-container-label'>Players:</span>
           {numbers.map(n => (<button className={n === num ? 'active' : ''} key={n} onClick={() => setNum(n)}>{n}</button>))}
         </div>
         {

@@ -1,6 +1,6 @@
 
 const _cache = new Map()
-setInterval(() => _cache.clear(), 60 * 60 * 1000)
+setInterval(() => _cache.clear(), 24 * 60 * 60 * 1000)
 
 export async function getJSON (url: string, options?: Record<string, any>): Promise<any> {
   const cachedRes = _cache.get(url)
