@@ -102,9 +102,9 @@ export function omitUnviable (arr: any[], targetField: string, threshold: number
   return arr.filter(el => el[targetField] >= threshold)
 }
 
-export function squeezePercents (arr: any[], targetField: string, minMax = 0, maxMin = Number.MAX_SAFE_INTEGER): any[] {
-  let max = minMax
-  let min = maxMin
+export function squeezePercents (arr: any[], targetField: string, minimalMaximum = Number.MIN_SAFE_INTEGER, maximalMinimum = Number.MAX_SAFE_INTEGER): any[] {
+  let max = minimalMaximum
+  let min = maximalMinimum
 
   const result = []
 

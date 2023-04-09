@@ -73,6 +73,8 @@ export default function Home (): JSX.Element {
 function GameRatingRow ({ rating, metaDict, ratingType }: { rating: ExtendedRate[], metaDict: any, ratingType: RatingType }): JSX.Element {
   if (ratingType === RatingType.relative) {
     rating = squeezePercents(rating, 'rate')
+  } else {
+    rating = squeezePercents(rating, 'rate', BEST_RATIO * 100, NOT_RECOMMEND_RATIO * 100)
   }
 
   for (const n of rating) {
@@ -90,7 +92,7 @@ function GameRatingRow ({ rating, metaDict, ratingType }: { rating: ExtendedRate
   if (ratingType === RatingType.relative) {
     rating = squeezePercents(rating, 'totalRate')
   } else {
-    rating = squeezePercents(rating, 'totalRate', 100 + (100 * BEST_RATIO), NOT_RECOMMEND_RATIO * 100)
+    rating = squeezePercents(rating, 'totalRate', 200, 0)
   }
 
   rating = rating.sort((b, a) => a.totalRate - b.totalRate)
@@ -135,7 +137,7 @@ function GamesRating (props: { meta: GameMeta, rating: GameRates & { totalRate: 
             Number of players score:{' '}
           </span>
           <span>
-            {rating.rate.toFixed(0)}
+            {(rating.rate / 10).toFixed(1)}
           </span>
         </div>
       </div>
