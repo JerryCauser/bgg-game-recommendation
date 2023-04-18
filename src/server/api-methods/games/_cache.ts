@@ -4,15 +4,15 @@ import { auth } from 'src/server/auth'
 import { GameRates } from 'src/server/external-api/game-rates'
 import { FilledGame, getFilledGames } from 'src/server/api-methods/games/everything'
 
-export type GetterFunction = () => Promise<any>
+export type GetterFunction<T> = () => Promise<T>
 
 class Cache <T = any> {
   data: T | null = null
 
   #retrieving: Promise<T> | null = null
 
-  getter?: GetterFunction
-  constructor (getter?: GetterFunction) {
+  getter?: GetterFunction<T>
+  constructor (getter?: GetterFunction<T>) {
     if (getter !== undefined) {
       this.getter = getter
 

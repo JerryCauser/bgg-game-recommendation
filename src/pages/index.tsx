@@ -4,18 +4,33 @@ import { MutableRefObject, useEffect, useRef, useState } from 'react'
 import Head from 'next/head'
 import useSWR from 'swr'
 import { ViewportList } from 'react-viewport-list'
-import { squeezePercents, groupByField, makeDict } from 'src/libs/helpers'
+import { squeezePercents, groupByField, makeDict, hasIntersection } from 'src/libs/helpers'
 import { BEST_RATIO, NOT_RECOMMEND_RATIO } from 'src/server/constants'
+import Selector from 'src/components/Selector.tsx'
+import { GameTags } from 'src/server/external-api/game-tags.ts'
 
 const fetcher = async (url: string): Promise<any> => await fetch(url)
   .then(async (res) => await res.json())
   .then(json => json.payload)
 
-const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+const PLAYERS_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
-enum RatingType { absolute, relative }
+enum ComparisonType { absolute = 'Absolute', relative = 'Relative' }
+enum RatingType { geek = 'Geek', user = 'User' }
 
-type ExtendedRate = GameRates & { totalRate: number, reviewScore: number }
+const TagsOptions = Object.values(GameTags)
+
+const ComparisonOptions = [
+  { value: ComparisonType.absolute, title: 'Absolute Score' },
+  { value: ComparisonType.relative, title: 'Relative Score' }
+]
+
+const RatingOptions = [
+  { value: RatingType.geek, title: 'Geeks Rating' },
+  { value: RatingType.user, title: 'Users Rating' }
+]
+
+type ExtendedRate = GameRates & { ratingToUse: number, totalRate: number, reviewScore: number }
 type ExtendedRateDict = Record<string, ExtendedRate[]>
 type GameDict = Record<any, FilledGame>
 
@@ -25,21 +40,23 @@ export default function Home (): JSX.Element {
     : new URLSearchParams(window.location.search)
   const bggIds = params.get('bggIds') ?? ''
 
+  const [tags, setTags] = useState<string[]>([])
   const [search, setSearch] = useState('')
   const scrollRef = useRef<HTMLElement | null>(null)
   const [num, setNum] = useState<number>(4)
   const [rating, setRating] = useState<ExtendedRateDict>()
   const [games, setGames] = useState<GameDict>()
   const { data: gameList } = useSWR<FilledGame[]>(`/api/games/everything?bggIds=${bggIds}`, fetcher, { revalidateOnFocus: false, revalidateOnReconnect: false })
-  const [ratingType, setRType] = useState<RatingType>(RatingType.absolute)
+  const [comparisonType, setCType] = useState<ComparisonType>(ComparisonType.absolute)
+  const [ratingType, setRType] = useState<RatingType>(RatingType.geek)
 
   const isLoading = games === undefined || rating === undefined
 
   useEffect(() => {
     if (Array.isArray(gameList)) {
-      let list = gameList
+      let list: FilledGame[] = []
 
-      if (search.length > 1) {
+      if (search.length > 1 || tags.length > 0) {
         const regexpText = search
           .replace(/[^\w.,;]/g, ' ')
           .split(/[,;]/)
@@ -47,11 +64,15 @@ export default function Home (): JSX.Element {
           .filter(n => n !== '')
           .join('|')
 
-        console.log({ regexpText })
         const regexp = new RegExp(regexpText, 'im')
 
+        for (const game of gameList) {
+          if (regexp.test(game.name) && hasIntersection(tags, game.tags)) {
+            list.push(game)
+          }
+        }
+      } else {
         list = gameList
-          .filter(n => regexp.test(n.name))
       }
 
       setGames(makeDict(list, 'bggId'))
@@ -62,7 +83,7 @@ export default function Home (): JSX.Element {
 
       setRating(groupByField(rateList, 'number'))
     }
-  }, [gameList, search])
+  }, [gameList, search, tags])
 
   const currentRating = isLoading
     ? []
@@ -82,31 +103,45 @@ export default function Home (): JSX.Element {
             <div className='filter-search'>
               <input type='text' placeholder='...' onInput={e => setSearch((e.target as any).value as string)} />
             </div>
-            <div className='rating-type'>
-              <button
-                className={ratingType === RatingType.absolute ? 'active' : ''}
-                onClick={() => setRType(RatingType.absolute)}
-              >
-                Absolute Score
-              </button>
-              <button
-                className={ratingType === RatingType.relative ? 'active' : ''}
-                onClick={() => setRType(RatingType.relative)}
-              >
-                Relative Score
-              </button>
-            </div>
-            <div className='button-container'>
-              <span className='button-container-label'>Players:</span>
-              <div className='button-container-self'>
-                {numbers.map(n => (<button className={n === num ? 'active' : ''} key={n} onClick={() => setNum(n)}>{n}</button>))}
-              </div>
+            <div className='strange-row'>
+              <Selector
+                title='Comparison'
+                options={ComparisonOptions}
+                value={comparisonType}
+                onInput={(value) => setCType(value)}
+              />
+              <Selector
+                title='Rating'
+                options={RatingOptions}
+                value={ratingType}
+                onInput={(value) => setRType(value)}
+              />
+              <Selector
+                title='Tags'
+                options={TagsOptions}
+                value={tags}
+                multiple
+                onInput={(value) => setTags(value)}
+              />
+              <Selector
+                title='Players'
+                options={PLAYERS_NUMBERS}
+                value={num}
+                onInput={(value) => setNum(value)}
+                hiddenDefault={false}
+              />
             </div>
           </div>
           {
             isLoading
               ? '...loading...'
-              : <GameRatingContainer rating={currentRating} games={games} ratingType={ratingType} containerRef={scrollRef} />
+              : <GameRatingContainer
+                  rating={currentRating}
+                  games={games}
+                  ratingType={ratingType}
+                  comparisonType={comparisonType}
+                  containerRef={scrollRef}
+                />
           }
         </div>
       </main>
@@ -118,21 +153,32 @@ function GameRatingContainer (props: {
   rating: ExtendedRate[]
   games: GameDict
   ratingType: RatingType
+  comparisonType: ComparisonType
   containerRef: MutableRefObject<HTMLElement | null>
 }): JSX.Element {
-  let { rating, games, ratingType, containerRef } = props
+  let {
+    rating,
+    games,
+    ratingType,
+    comparisonType,
+    containerRef
+  } = props
 
-  if (ratingType === RatingType.relative) {
+  if (comparisonType === ComparisonType.relative) {
     rating = squeezePercents(rating, 'rate')
   } else {
     rating = squeezePercents(rating, 'rate', BEST_RATIO * 100, NOT_RECOMMEND_RATIO * 100)
   }
 
   for (const n of rating) {
-    n.reviewScore = (games[n.bggId].score ?? 0) * 10
+    n.ratingToUse = ratingType === RatingType.geek
+      ? (games[n.bggId].avgScore ?? 0)
+      : (games[n.bggId].score ?? 0)
+
+    n.reviewScore = n.ratingToUse * 10
   }
 
-  if (ratingType === RatingType.relative) {
+  if (comparisonType === ComparisonType.relative) {
     rating = squeezePercents(rating, 'reviewScore')
   }
 
@@ -140,13 +186,15 @@ function GameRatingContainer (props: {
     n.totalRate = n.rate + n.reviewScore
   }
 
-  if (ratingType === RatingType.relative) {
+  if (comparisonType === ComparisonType.relative) {
     rating = squeezePercents(rating, 'totalRate')
   } else {
     rating = squeezePercents(rating, 'totalRate', 200, 0)
   }
 
-  rating = rating.sort((b, a) => a.totalRate - b.totalRate)
+  rating = rating
+    .filter(n => n.totalRate > 49)
+    .sort((b, a) => a.totalRate - b.totalRate)
 
   return (
     <section className='games'>
@@ -161,7 +209,7 @@ function GameRatingContainer (props: {
   )
 }
 
-function GamesRating (props: { meta: FilledGame, rating: GameRates & { totalRate: number } }): JSX.Element {
+function GamesRating (props: { meta: FilledGame, rating: ExtendedRate }): JSX.Element {
   const { meta, rating } = props
 
   return (
@@ -182,7 +230,7 @@ function GamesRating (props: { meta: FilledGame, rating: GameRates & { totalRate
             Review score:{' '}
           </span>
           <span>
-            {meta.score?.toFixed(1) ?? '—'}
+            {rating.ratingToUse?.toFixed(1) ?? '—'}
           </span>
         </div>
         <div className='game-description-row'>

@@ -2,10 +2,10 @@ import { Inter } from 'next/font/google'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export default function FontWrapper ({ children }) {
+export default function FontWrapper (props: { children: JSX.Element }): JSX.Element {
   return (
     <div className={inter.className}>
-      {children}
+      {props.children}
     </div>
   )
 }

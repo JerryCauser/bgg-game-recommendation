@@ -3,6 +3,7 @@ import type { GameItem } from 'src/server/external-api/games'
 import db from 'src/server/db'
 import { EVERYTHING_CACHE } from 'src/server/api-methods/games/_cache'
 import { GameRates } from 'src/server/external-api/game-rates'
+import { GameTags } from 'src/server/external-api/game-tags.ts'
 
 interface ResponseData {
   statusCode: number
@@ -45,8 +46,8 @@ export async function handler (
   }
 }
 
-export type FilledGame = Pick<GameItem, 'bggId' | 'name' | 'image' | 'imageSmall' | 'url' | 'avgScore' | 'score'>
-& { polls: Pick<GameRates, 'bggId' | 'number' | 'rate'> }
+export type FilledGame = Pick<GameItem, 'bggId' | 'name' | 'image' | 'imageSmall' | 'url' | 'avgScore' | 'score' | 'rank' | 'year'>
+& { polls: Pick<GameRates, 'bggId' | 'number' | 'rate'> } & { tags: GameTags[] }
 
 export async function getFilledGames (query?: any): Promise<FilledGame[]> {
   const { collections } = await db
@@ -64,13 +65,28 @@ export async function getFilledGames (query?: any): Promise<FilledGame[]> {
           foreignField: 'bggId',
           as: 'polls',
           pipeline: [
-            { $match: { votersNumber: { $gte: 37 } } },
+            { $match: { votersNumber: { $gte: 20 } } },
             { $project: { bggId: 1, number: 1, rate: 1, type: 1 } }
           ]
         }
       },
       { $match: { 'polls.1': { $exists: true } } },
-      { $project: { _id: 0, bggId: 1, polls: 1, name: 1, image: 1, imageSmall: 1, url: 1, avgScore: 1, score: 1 } }
+      {
+        $project: {
+          _id: 0,
+          bggId: 1,
+          polls: 1,
+          name: 1,
+          image: 1,
+          imageSmall: 1,
+          url: 1,
+          avgScore: 1,
+          score: 1,
+          rank: 1,
+          year: 1,
+          tags: 1
+        }
+      }
     ]).toArray() ?? []
   ) as FilledGame[]
 

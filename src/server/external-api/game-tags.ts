@@ -12,19 +12,32 @@ export async function getBggGameTags (bggId: number | string): Promise<{ bggId: 
   }
 }
 
-export function * GameTagsGenerator (tags: string[]): Generator<string> {
+export enum GameTags {
+  economic = 'economic',
+  deckBuilding = 'deck_building',
+  dice = 'dice',
+  boardBuilding = 'board_building',
+  coop = 'coop',
+  bluffing = 'bluffing',
+  hiddenRoles = 'hidden_roles',
+  party = 'party',
+  deduction = 'deduction',
+  words = 'words'
+}
+
+export function * GameTagsGenerator (tags: string[]): Generator<GameTags> {
   if (
     tags.includes('economic')
-  ) yield 'economic'
+  ) yield GameTags.economic
 
   if (
     tags.includes('set_collection') ||
     tags.includes('deck_bag_and_pool_building')
-  ) yield 'deck_building'
+  ) yield GameTags.deckBuilding
 
   if (
     tags.includes('dice_rolling')
-  ) yield 'dice'
+  ) yield GameTags.dice
 
   if (
     tags.includes('deck_construction') ||
@@ -33,34 +46,34 @@ export function * GameTagsGenerator (tags: string[]): Generator<string> {
     tags.includes('network_and_route_building') ||
     tags.includes('map_addition') ||
     tags.includes('hexagon_grid')
-  ) yield 'board_building'
+  ) yield GameTags.boardBuilding
 
   if (
     tags.includes('cooperative_game') ||
     tags.includes('team_based_game')
-  ) yield 'coop'
+  ) yield GameTags.coop
 
   if (
     tags.includes('bluffing')
-  ) yield 'bluffing'
+  ) yield GameTags.bluffing
 
   if (
     tags.includes('hidden_roles') ||
     tags.includes('traitor_game')
-  ) yield 'hidden_roles'
+  ) yield GameTags.hiddenRoles
 
   if (
     tags.includes('party_game') ||
     tags.includes('humor') ||
     tags.includes('targeted_clues')
-  ) yield 'party'
+  ) yield GameTags.party
 
   if (
     tags.includes('deduction') ||
     tags.includes('hidden_movement')
-  ) yield 'deduction'
+  ) yield GameTags.deduction
 
   if (
     tags.includes('word_games')
-  ) yield 'words'
+  ) yield GameTags.words
 }
