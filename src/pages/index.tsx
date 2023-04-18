@@ -227,7 +227,7 @@ function GamesRating (props: { meta: FilledGame, rating: ExtendedRate }): JSX.El
         </div>
         <div className='game-description-row'>
           <span>
-            Review score:{' '}
+            Rating:{' '}
           </span>
           <span>
             {rating.ratingToUse?.toFixed(1) ?? '—'}
@@ -235,7 +235,7 @@ function GamesRating (props: { meta: FilledGame, rating: ExtendedRate }): JSX.El
         </div>
         <div className='game-description-row'>
           <span>
-            Number of players score:{' '}
+            Rating by players number:{' '}
           </span>
           <span>
             {(rating.rate / 10).toFixed(1)}
