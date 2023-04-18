@@ -5,36 +5,19 @@
   'Roboto Mono', 'Oxygen Mono', 'Ubuntu Monospace', 'Source Code Pro',
   'Fira Mono', 'Droid Sans Mono', 'Courier New', monospace;
 
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 0, 0, 0;
-  --background-end-rgb: 0, 0, 0;
+  --background-start-rgb: 5, 5, 5;
+  --background-end-rgb: 21, 21, 21;
 
   --main-accent: rgb(255, 210, 72);
 
-  --primary-glow: radial-gradient(rgba(1, 65, 255, 0.4), rgba(1, 65, 255, 0));
-  --secondary-glow: linear-gradient(
-          to bottom right,
-          rgba(1, 65, 255, 0),
-          rgba(1, 65, 255, 0),
-          rgba(1, 65, 255, 0.3)
-  );
+  --gray-light: rgba(197 197 197);
+  --gray: rgb(154 154 154);
+  --gray-dark: rgba(141 141 141);
 
-  --tile-start-rgb: 2, 13, 46;
-  --tile-end-rgb: 2, 5, 19;
-  --tile-border: conic-gradient(
-          #ffffff80,
-          #ffffff40,
-          #ffffff30,
-          #ffffff20,
-          #ffffff10,
-          #ffffff10,
-          #ffffff80
-  );
+  --black: rgb(26 26 26);
+  --black-shadow: rgb(74 74 74);
 
-  --callout-rgb: 238, 240, 241;
-  --callout-border-rgb: 172, 175, 176;
-  --card-rgb: 180, 185, 188;
-  --card-border-rgb: 131, 134, 135;
+  --white: rgb(250, 250, 250);
 }
 
 * {
@@ -49,8 +32,8 @@ body {
   overflow-x: hidden;
 }
 
-body, div, button, span, a {
-  color: rgb(255, 255, 255);
+body, div, button, span, a, input {
+  color: var(--white);
 }
 
 body {
@@ -73,24 +56,30 @@ a {
 /*  }*/
 /*}*/
 
+.main-overflow {
+  height: 100vh;
+  padding-top: 2rem;
+  overflow: auto;
+  padding-bottom: 5rem;
+}
+
 .main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 100vh;
   max-width: var(--max-width);
   width: 100%;
   margin: auto;
-  padding-top: 2rem;
 }
 
 .games {
-
+  width: 100%;
 }
 
 .game-container {
   --item-size: 5rem;
   max-width: var(--max-width);
+  /*height: calc(var(--item-size) / 5 * 7);*/
   width: 100%;
   display: grid;
   margin-bottom: 1rem;
@@ -99,7 +88,7 @@ a {
   align-items: center;
   grid-template-columns: 1fr 1fr 100fr;
   grid-gap: 1.5rem;
-  background: #1a1a1a;
+  background: var(--black);
 }
 
 .game-container:hover {
@@ -108,7 +97,7 @@ a {
 
 .game-container img {
   display: block;
-  border: solid 2px rgb(240, 240, 240, 0.8);
+  border: solid 2px var(--gray-light);
   width: var(--item-size);
   height: var(--item-size);
   border-radius: 5%;
@@ -137,7 +126,7 @@ a {
 
 .game-description a {
   display: inline-block;
-  border-bottom: 2px dashed rgba(255 255 255 / 60%)
+  border-bottom: 2px dashed var(--gray);
 }
 .game-description a:after {
   content: ' 🔗';
@@ -145,9 +134,50 @@ a {
 }
 
 .game-description-row > span:nth-child(1) {
-  color: #8d8d8d;
+  color: var(--gray-dark);
 }
 
+.filter {
+  display: flex;
+  flex-direction: column;
+  font-size: 1rem;
+  width: 100%;
+  padding: 0 1rem;
+  grid-gap: 1rem;
+  --line-height: 2.5rem;
+  --font-size: 1.1rem;
+}
+
+.filter-search {
+  position: relative;
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+}
+
+.filter-search:after {
+  content: '🔎';
+  position: absolute;
+  top: 1px;
+  right: 1rem;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.filter-search input {
+  width: 100%;
+  font-size: inherit;
+  line-height: inherit;
+  background: transparent;
+  border: 1px solid var(--black-shadow);
+  padding: 1px 2.5rem 0 1rem;
+  border-radius: 2px;
+  outline: none;
+  letter-spacing: 1px;
+}
+
+.filter-search input:focus {
+  border: 1px solid var(--main-accent);
+}
 
 .rating-type {
   display: flex;
@@ -155,13 +185,12 @@ a {
   grid-gap: 1.5rem;
   width: 100%;
   position: relative;
-  margin-bottom: 1.5rem;
 }
 
 .button-container {
   display: flex;
   justify-content: flex-start;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   width: var(--max-width);
   max-width: 100%;
   margin-bottom: 2rem;
@@ -174,22 +203,32 @@ a {
   font-size: 1rem;
 }
 
-button {
-  padding: 0.67rem 1rem;
+.button-container-self {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  width: 100%;
+  grid-gap: 1.5rem;
+}
+
+.filter button {
+  padding: 0 1rem;
+  font-size: var(--font-size);
+  line-height: var(--line-height);
 
   background: transparent;
-  border: 1px solid #4a4a4a;
+  border: 1px solid var(--black-shadow);
   border-radius: 2px;
   font-weight: bold;
-  font-size: 1.1rem;
 }
 
 button:hover {
-  background: #1a1a1a;
+  background: var(--black);
   cursor: pointer;
 }
 
 button.active {
   background: var(--main-accent);
-  color: #1a1a1a;
+  color: var(--black);
 }

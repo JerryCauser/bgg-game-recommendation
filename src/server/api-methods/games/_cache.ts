@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import type { GameItem } from 'src/server/external-api/games'
 import { auth } from 'src/server/auth'
-import db from 'src/server/db'
 import { GameRates } from 'src/server/external-api/game-rates'
 import { FilledGame, getFilledGames } from 'src/server/api-methods/games/everything'
 

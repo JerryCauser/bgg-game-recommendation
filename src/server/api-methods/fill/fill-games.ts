@@ -9,7 +9,7 @@ export const meta = {
   from: 0
 }
 
-const MAX = 5000
+const MAX = 10000
 
 export async function handler (
   req: NextApiRequest,

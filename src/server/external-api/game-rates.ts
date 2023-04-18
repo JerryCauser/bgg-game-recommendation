@@ -17,17 +17,17 @@ interface Options {
 
 export interface GameRates {
   bggId: number
-  number: string // quantity of players
+  number?: number // quantity of players
   best: number
   recommended: number
   not_recommended: number
   rate: number
+  votersNumber: number
 }
 
 export async function getOneGameRates (bggId: number | unknown, options?: Options): Promise<GameRates[]> {
   if (typeof bggId !== 'number') throw createError('no_bggId_provided')
 
-  const votersThreshold = options?.votersThreshold ?? 20
   const omitUnviable = options?.omitUnviable ?? false
 
   const pollInfo = await getJSON(`https://boardgamegeek.com/geekitempoll.php?action=view&itempolltype=numplayers&objectid=${bggId}&objecttype=thing`, {
@@ -51,10 +51,6 @@ export async function getOneGameRates (bggId: number | unknown, options?: Option
 
   const votersNumber = parseInt(voters, 10)
 
-  if (isNaN(votersNumber) || votersNumber < votersThreshold) {
-    throw createError('voters_number_too_low_for_adequate_calculations', bggId)
-  }
-
   const cCSet: Map<string, any> = choicesColumns
     .reduce((acc: Map<string, any>, n: any) => acc.set(n.choiceid, n), new Map())
   const cRSet: Map<string, any> = choicesRows
@@ -77,7 +73,9 @@ export async function getOneGameRates (bggId: number | unknown, options?: Option
   }
 
   for (const el of poll) {
+    el.number = parseInt(el.number, 10)
     el.bggId = bggId
+    el.votersNumber = isNaN(votersNumber) ? 0 : votersNumber
   }
 
   return poll

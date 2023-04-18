@@ -29,7 +29,12 @@ export async function handler (
     const bggIds: number[] = (
       await collections.games
         .aggregate([
-          { $match: { bggId: { $gte: meta.lastBggId ?? 0 }, ratesFilledAt: { $exists: false } } },
+          {
+            $match: {
+              ratesFilledAt: { $exists: false },
+              bggId: { $gte: meta.lastBggId ?? 0 }
+            }
+          },
           { $project: { bggId: 1 } },
           { $sort: { bggId: 1 } }
         ])

@@ -50,10 +50,6 @@ async function initDb ({ name, url }: options): Promise<void> {
 }
 
 const instance: Promise<DbInstance> = new Promise((resolve, reject) => {
-  console.log({
-    name: process.env.DB_NAME as string,
-    url: process.env.MONGODB_URL as string
-  })
   initDb({
     name: process.env.DB_NAME as string,
     url: process.env.MONGODB_URL as string

@@ -63,9 +63,13 @@ export async function getFilledGames (query?: any): Promise<FilledGame[]> {
           localField: 'bggId',
           foreignField: 'bggId',
           as: 'polls',
-          pipeline: [{ $project: { bggId: 1, number: 1, rate: 1, type: 1 } }]
+          pipeline: [
+            { $match: { votersNumber: { $gte: 37 } } },
+            { $project: { bggId: 1, number: 1, rate: 1, type: 1 } }
+          ]
         }
       },
+      { $match: { 'polls.1': { $exists: true } } },
       { $project: { _id: 0, bggId: 1, polls: 1, name: 1, image: 1, imageSmall: 1, url: 1, avgScore: 1, score: 1 } }
     ]).toArray() ?? []
   ) as FilledGame[]
