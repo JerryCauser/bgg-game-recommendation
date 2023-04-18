@@ -1,37 +1,49 @@
+import type { GameRates } from 'src/server/external-api/game-rates'
+import type { GameItem } from 'src/server/external-api/games'
 import Head from 'next/head'
 import useSWR from 'swr'
-import { useState } from 'react'
-import { GameMeta, GameRates } from 'src/libs/game'
-import { squeezePercents } from 'src/libs/helpers'
-import { BEST_RATIO, NOT_RECOMMEND_RATIO } from 'src/libs/constants'
+import { useEffect, useState } from 'react'
+import { squeezePercents, groupByField, makeDict } from 'src/libs/helpers'
+import { BEST_RATIO, NOT_RECOMMEND_RATIO } from 'src/server/constants'
 
 const fetcher = async (url: string): Promise<any> => await fetch(url)
   .then(async (res) => await res.json())
   .then(json => json.payload)
 
-const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
 enum RatingType { absolute, relative }
 
 type ExtendedRate = GameRates & { totalRate: number, reviewScore: number }
+type ExtendedRateDict = Record<string, ExtendedRate[]>
+type GameDict = Record<any, GameItem>
 
 export default function Home (): JSX.Element {
   const params = typeof window === 'undefined'
     ? new URLSearchParams('')
     : new URLSearchParams(window.location.search)
   const bggIds = params.get('bggIds') ?? ''
-  const omitUnviable = params.has('omitUnviable')
 
-  const [num, setNum] = useState(4)
-  const { data: rating, isLoading: isLoadingRating } = useSWR(`/api/rating?${omitUnviable ? 'omitUnviable&' : ''}bggIds=${bggIds}`, fetcher)
-  const { data: gamesDict, isLoading: isLoadingGames } = useSWR(`/api/game/all?dict=1&bggIds=${bggIds}`, fetcher)
-  const [ratingType, setRtype] = useState(RatingType.absolute)
+  const [num, setNum] = useState<number>(4)
+  const [rating, setRating] = useState<ExtendedRateDict>()
+  const [games, setGames] = useState<GameDict>()
+  const { data: rateList } = useSWR(`/api/games/rating?bggIds=${bggIds}`, fetcher, { revalidateOnFocus: false, revalidateOnReconnect: false })
+  const { data: gameList } = useSWR(`/api/games/all?bggIds=${bggIds}`, fetcher, { revalidateOnFocus: false, revalidateOnReconnect: false })
+  const [ratingType, setRType] = useState<RatingType>(RatingType.absolute)
 
-  const isLoading = isLoadingRating || isLoadingGames
+  const isLoading = games === undefined || rating === undefined
+
+  useEffect(() => {
+    if (Array.isArray(rateList) && rateList.length > 0) setRating(groupByField(rateList, 'number'))
+  }, [rateList])
+
+  useEffect(() => {
+    if (Array.isArray(gameList) && gameList.length > 0) setGames(makeDict(gameList, 'bggId'))
+  }, [gameList])
 
   const currentRating = isLoading
     ? []
-    : rating?.[num] as ExtendedRate[] ?? []
+    : rating?.[num.toString()] ?? []
 
   return (
     <>
@@ -40,18 +52,19 @@ export default function Home (): JSX.Element {
         <meta name='description' content='Games to play' />
         <meta name='viewport' content='width=device-width, initial-scale=1' />
         <link rel='icon' href='/favicon.ico' />
+        <script async src='/lazysizes.min.js' />
       </Head>
       <main className='main'>
         <div className='rating-type'>
           <button
             className={ratingType === RatingType.absolute ? 'active' : ''}
-            onClick={() => setRtype(RatingType.absolute)}
+            onClick={() => setRType(RatingType.absolute)}
           >
             Absolute Score
           </button>
           <button
             className={ratingType === RatingType.relative ? 'active' : ''}
-            onClick={() => setRtype(RatingType.relative)}
+            onClick={() => setRType(RatingType.relative)}
           >
             Relative Score
           </button>
@@ -63,14 +76,16 @@ export default function Home (): JSX.Element {
         {
           isLoading
             ? '...loading...'
-            : <GameRatingRow rating={currentRating} metaDict={gamesDict} ratingType={ratingType} />
+            : <GameRatingContainer rating={currentRating} games={games} ratingType={ratingType} />
         }
       </main>
     </>
   )
 }
 
-function GameRatingRow ({ rating, metaDict, ratingType }: { rating: ExtendedRate[], metaDict: any, ratingType: RatingType }): JSX.Element {
+function GameRatingContainer (props: { rating: ExtendedRate[], games: GameDict, ratingType: RatingType }): JSX.Element {
+  let { rating, games, ratingType } = props
+
   if (ratingType === RatingType.relative) {
     rating = squeezePercents(rating, 'rate')
   } else {
@@ -78,7 +93,7 @@ function GameRatingRow ({ rating, metaDict, ratingType }: { rating: ExtendedRate
   }
 
   for (const n of rating) {
-    n.reviewScore = metaDict[n.bggId].rating * 10
+    n.reviewScore = (games[n.bggId].avgScore ?? 0) * 10
   }
 
   if (ratingType === RatingType.relative) {
@@ -101,35 +116,36 @@ function GameRatingRow ({ rating, metaDict, ratingType }: { rating: ExtendedRate
     <section className='games'>
       {
         rating.map(game => {
-          return (<GamesRating key={game.bggId} rating={game} meta={metaDict[game.bggId]} />)
+          return (<GamesRating key={game.bggId} rating={game} meta={games[game.bggId]} />)
         })
       }
     </section>
   )
 }
 
-function GamesRating (props: { meta: GameMeta, rating: GameRates & { totalRate: number } }): JSX.Element {
+function GamesRating (props: { meta: GameItem, rating: GameRates & { totalRate: number } }): JSX.Element {
   const { meta, rating } = props
 
   return (
     <div className='game-container'>
       <img
-        src={meta.image}
+        data-src={meta.image ?? meta.imageSmall}
         alt={meta.name}
+        className='lazyload'
       />
       <div className='game-rating'>
         {(rating.totalRate).toFixed(0)}
       </div>
       <div className='game-description'>
         <div className='game-description-row'>
-          <a href={meta.url as string} target='_blank' rel='noreferrer'>{meta.name}</a>
+          <a href={meta.url} target='_blank' rel='noreferrer'>{meta.name}</a>
         </div>
         <div className='game-description-row'>
           <span>
             Review score:{' '}
           </span>
           <span>
-            {meta.rating.toFixed(1)}
+            {meta.avgScore?.toFixed(1) ?? '—'}
           </span>
         </div>
         <div className='game-description-row'>

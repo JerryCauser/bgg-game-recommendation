@@ -1,5 +1,3 @@
-import { getJSON, getText } from './fetch'
-import { BEST_RATIO, NOT_RECOMMEND_RATIO, RECOMMEND_RATIO } from './constants'
 import {
   createError,
   project,
@@ -8,7 +6,9 @@ import {
   makeArray,
   calcRate,
   omitUnviable as omitUnviableFunction
-} from './helpers'
+} from 'src/libs/helpers'
+import { getJSON } from './fetch'
+import { BEST_RATIO, NOT_RECOMMEND_RATIO, RECOMMEND_RATIO } from 'src/server/constants'
 
 interface Options {
   votersThreshold?: number
@@ -16,26 +16,15 @@ interface Options {
 }
 
 export interface GameRates {
-  number: string
+  bggId: number
+  number: string // quantity of players
   best: number
   recommended: number
   not_recommended: number
   rate: number
-  bggId: number
 }
 
-export interface GameMeta {
-  bggId: number
-  rating: number
-  voteCount: number
-  image: string
-  url: string | null
-  slug: string | null
-  name: string
-  description: string
-}
-
-export async function getOneGameRates (bggId: number | unknown, options?: Options): Promise<GameRates> {
+export async function getOneGameRates (bggId: number | unknown, options?: Options): Promise<GameRates[]> {
   if (typeof bggId !== 'number') throw createError('no_bggId_provided')
 
   const votersThreshold = options?.votersThreshold ?? 20
@@ -82,7 +71,7 @@ export async function getOneGameRates (bggId: number | unknown, options?: Option
 
   poll = makeArray(poll, 'number')
   poll = calcRate(poll, { best: BEST_RATIO, recommended: RECOMMEND_RATIO, not_recommended: NOT_RECOMMEND_RATIO })
-  // poll = squeezePercents(poll, 'rate')
+
   if (omitUnviable) {
     poll = omitUnviableFunction(poll, 'rate', 50)
   }
@@ -91,41 +80,5 @@ export async function getOneGameRates (bggId: number | unknown, options?: Option
     el.bggId = bggId
   }
 
-  return poll as GameRates
-}
-
-export async function getGameMetaInfo (bggId: number | unknown): Promise<GameMeta> {
-  if (typeof bggId !== 'number') throw createError('no_bggId_provided')
-
-  const html = await getText(`https://boardgamegeek.com/boardgame/${bggId}`)
-
-  const schemaParsed = html.match(/<script type="application\/ld\+json">([\s\S]+)<\/script>/im)
-
-  if (typeof schemaParsed?.[1] !== 'string') throw createError('unexpected_parsing_result')
-
-  const schema = JSON.parse(schemaParsed[1].trim())
-
-  const rating = parseFloat(schema.aggregateRating.ratingValue)
-  const voteCount = parseFloat(schema.aggregateRating.reviewCount)
-  const image = schema.image
-  const name = schema.name
-  const description = schema.description
-
-  const urlMatch = html.match(/<meta\s+property="og:url"\s+content="(.+?)"\s+\/>/im)
-
-  const url = urlMatch === null ? null : urlMatch[1]
-  const slug = typeof url === 'string'
-    ? url.split(',').at(-1) ?? null
-    : null
-
-  return {
-    bggId,
-    name,
-    description,
-    url,
-    slug,
-    image,
-    rating,
-    voteCount
-  }
+  return poll
 }
