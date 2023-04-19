@@ -122,10 +122,10 @@ export function squeezePercents (arr: any[], targetField: string, minimalMaximum
   return result
 }
 
-export function hasIntersection (arr1: any[], arr2: any[]): boolean {
-  if (arr2.length === 0 && arr1.length === 0) return false
+export function hasIntersection (gold: any[], target: any[]): boolean {
+  if (gold.length === 0) return true
 
-  for (const elem of arr1) if (arr2.includes(elem)) return true
+  for (const elem of gold) if (target.includes(elem)) return true
 
   return false
 }
