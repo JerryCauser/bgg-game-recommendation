@@ -1,3 +1,4 @@
+import type { NextPageContext } from 'next'
 import type { GameRates } from 'src/server/external-api/game-rates'
 import type { FilledGame } from 'src/server/api-methods/games/everything'
 import { MutableRefObject, useEffect, useRef, useState } from 'react'
@@ -6,9 +7,9 @@ import useSWR from 'swr'
 import { ViewportList } from 'react-viewport-list'
 import { squeezePercents, groupByField, makeDict, hasIntersection } from 'src/libs/helpers'
 import { BEST_RATIO, NOT_RECOMMEND_RATIO } from 'src/server/constants'
-import Selector from 'src/components/Selector.tsx'
 import { GameTags } from 'src/server/external-api/game-tags.ts'
-import { NextPageContext } from 'next'
+import Selector from 'src/components/Selector.tsx'
+import ScrollToTopButton from 'src/components/ScrollToTopButton.tsx'
 
 const fetcher = async (url: string): Promise<any> => await fetch(url)
   .then(async (res) => await res.json())
@@ -149,6 +150,7 @@ export default function Home (props: { telegram: boolean }): JSX.Element {
           }
         </div>
       </main>
+      <ScrollToTopButton overflowRef={scrollRef} />
     </>
   )
 }
