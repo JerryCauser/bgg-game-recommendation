@@ -189,17 +189,19 @@ function GameRatingContainer (props: {
   }
 
   for (const n of rating) {
+    // n.totalRate = n.reviewScore * (n.rate * BEST_RATIO / 100)
     n.totalRate = n.rate + n.reviewScore
   }
 
   if (comparisonType === ComparisonType.relative) {
     rating = squeezePercents(rating, 'totalRate')
   } else {
+    // rating = squeezePercents(rating, 'totalRate', BEST_RATIO * 100, 0)
     rating = squeezePercents(rating, 'totalRate', 200, 0)
   }
 
   rating = rating
-    .filter(n => n.totalRate > 49)
+    .filter(n => n.totalRate > 49 && n.rate > 49)
     .sort((b, a) => a.totalRate - b.totalRate)
 
   return (
