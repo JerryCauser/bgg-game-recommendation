@@ -37,6 +37,11 @@ export async function handler (
     }
     console.timeEnd('everything')
 
+    res.setHeader(
+      'Cache-Control',
+      'public, s-maxage=172800, stale-while-revalidate=1209600, immutable'
+    )
+
     res.status(200).json({
       statusCode: 200,
       payload: gameList
