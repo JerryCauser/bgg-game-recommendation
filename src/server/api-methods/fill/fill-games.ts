@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import db from 'src/server/db'
+import { collections, mongoClient } from 'src/server/db'
 import useSSE from 'src/server/use-sse'
 import { getItemsByRank } from 'src/server/external-api/games'
 import { auth } from 'src/server/auth'
@@ -19,14 +19,14 @@ export async function handler (
 
   if (meta.ac !== null) meta.ac.abort()
 
-  const { collections } = await db
-
   const ac = meta.ac = new AbortController()
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [send, end] = useSSE(res, () => ac.abort())
 
   try {
+    await mongoClient.connect()
+
     const gameGenerator = getItemsByRank(
       meta.from,
       MAX,
@@ -70,5 +70,6 @@ export async function handler (
     if (meta.from >= MAX) meta.from = 0
 
     end()
+    await mongoClient.close()
   }
 }

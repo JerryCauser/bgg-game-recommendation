@@ -7,57 +7,19 @@ interface Collections {
   polls: Collection
 }
 
-interface DbInstance {
-  db: Db
-  mongoClient: MongoClient
-  collections: Collections
-}
-
-let db: Db
-let mongoClient: MongoClient
-let collections: Collections
-
-interface options {
-  name: string
-  url: string
-}
-
-async function initDb ({ name, url }: options): Promise<void> {
-  try {
-    mongoClient = new MongoClient(url, {
-      serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true
-      }
-    })
-
-    await mongoClient.connect()
-
-    db = mongoClient.db(name)
-
-    console.log(`Connected to DB ${url} ${name}`)
-
-    collections = {
-      games: db.collection('games'),
-      credits: db.collection('credits'),
-      polls: db.collection('polls')
-    }
-  } catch (e) {
-    console.error('initDb error:', e)
-    await initDb({ name, url })
+export const mongoClient: MongoClient = new MongoClient(process.env.MONGODB_URL as string, {
+  maxConnecting: 10,
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true
   }
-}
-
-const instance: Promise<DbInstance> = new Promise((resolve, reject) => {
-  initDb({
-    name: process.env.DB_NAME as string,
-    url: process.env.MONGODB_URL as string
-  })
-    .then(() => {
-      resolve({ db, mongoClient, collections })
-    })
-    .catch(reject)
 })
 
-export default instance
+export const db: Db = mongoClient.db(process.env.DB_NAME)
+
+export const collections: Collections = {
+  games: db.collection('games'),
+  credits: db.collection('credits'),
+  polls: db.collection('polls')
+}

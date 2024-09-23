@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import db from 'src/server/db'
+import { collections, mongoClient } from 'src/server/db'
 import useSSE from 'src/server/use-sse'
 import { getBggGameTags } from 'src/server/external-api/game-tags'
 import { auth } from 'src/server/auth'
@@ -19,14 +19,14 @@ export async function handler (
     meta.ac.abort()
   }
 
-  const { collections } = await db
-
   const ac = meta.ac = new AbortController()
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [send, end] = useSSE(res, () => ac.abort())
 
   try {
+    await mongoClient.connect()
+
     const bggIds: number[] = (
       await collections.games
         .aggregate([
@@ -74,5 +74,6 @@ export async function handler (
       meta.ac = null
     }
     end()
+    await mongoClient.close()
   }
 }

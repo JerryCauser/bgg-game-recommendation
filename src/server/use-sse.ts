@@ -22,7 +22,7 @@ function useSSE (res: NextApiResponse, onClose = () => {}, { pingInterval = 30 *
 
   const end: EndFunction = () => res.end()
 
-  let intervalId: NodeJS.Timer
+  let intervalId: NodeJS.Timeout
 
   if (pingInterval > 0) {
     intervalId = setInterval(() => sendChunk('1', 'ping'), pingInterval)

@@ -13,19 +13,25 @@ export async function getBggGameTags (bggId: number | string): Promise<{ bggId: 
 }
 
 export enum GameTags {
+  party = 'party',
+  hiddenRoles = 'hidden_roles',
+  political = 'political',
   economic = 'economic',
   deckBuilding = 'deck_building',
   dice = 'dice',
   boardBuilding = 'board_building',
   coop = 'coop',
   bluffing = 'bluffing',
-  hiddenRoles = 'hidden_roles',
-  party = 'party',
-  deduction = 'deduction',
-  words = 'words'
+  deduction = 'deduction'
 }
 
 export function * GameTagsGenerator (tags: string[]): Generator<GameTags> {
+  if (
+    tags.includes('political') ||
+    tags.includes('negotiation') ||
+    tags.includes('alliances')
+  ) yield GameTags.political
+
   if (
     tags.includes('economic')
   ) yield GameTags.economic
@@ -45,7 +51,8 @@ export function * GameTagsGenerator (tags: string[]): Generator<GameTags> {
     tags.includes('modular_board') ||
     tags.includes('network_and_route_building') ||
     tags.includes('map_addition') ||
-    tags.includes('hexagon_grid')
+    tags.includes('hexagon_grid') ||
+    tags.includes('tile_placement')
   ) yield GameTags.boardBuilding
 
   if (
@@ -72,8 +79,4 @@ export function * GameTagsGenerator (tags: string[]): Generator<GameTags> {
     tags.includes('deduction') ||
     tags.includes('hidden_movement')
   ) yield GameTags.deduction
-
-  if (
-    tags.includes('word_games')
-  ) yield GameTags.words
 }

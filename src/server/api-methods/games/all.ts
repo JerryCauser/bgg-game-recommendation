@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import type { GameItem } from 'src/server/external-api/games'
-import db from 'src/server/db'
+import { collections } from 'src/server/db'
 import { ALL_GAMES_CACHE } from 'src/server/api-methods/games/_cache'
 
 interface ResponseData {
@@ -17,8 +17,6 @@ export async function handler (
     const ids = typeof req.query.bggIds === 'string'
       ? req.query.bggIds.split(',').map(s => parseInt(s, 10)).filter(Boolean)
       : []
-
-    const { collections } = await db
 
     const query: any = {}
 

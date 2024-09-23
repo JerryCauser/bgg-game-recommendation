@@ -25,7 +25,9 @@ class Cache <T = any> {
 
     if (this.getter !== undefined) {
       if (this.#retrieving !== null) {
-        return await this.#retrieving
+        await this.#retrieving
+
+        return this.data
       }
 
       this.#retrieving = this.getter()

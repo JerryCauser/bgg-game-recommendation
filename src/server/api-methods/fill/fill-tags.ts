@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import db from 'src/server/db'
+import { collections, mongoClient } from 'src/server/db'
 import { GameTagsGenerator } from 'src/server/external-api/game-tags'
 import { auth } from 'src/server/auth'
 
@@ -15,31 +15,36 @@ export async function handler (
 
   if (meta.ac !== null) meta.ac.abort()
 
-  const { collections } = await db
-
   const ac = meta.ac = new AbortController()
 
   try {
-    const credits = await collections.credits.find({})
+    await mongoClient.connect()
+    const credits = collections.credits.find({})
 
-    const bulk = collections.games.initializeUnorderedBulkOp()
+    let i = 100
+    while (--i > 0) {
+      const bulk = collections.games.initializeUnorderedBulkOp()
+      let credit = null
 
-    for (let i = 0; i < 10000; ++i) {
-      if (ac.signal.aborted) break
-      const credit = await credits.next()
+      for (let i = 0; i < 1000; ++i) {
+        if (ac.signal.aborted) break
+        credit = await credits.next()
+
+        if (credit === null) break
+
+        bulk
+          .find({ bggId: credit.bggId })
+          .updateOne({
+            $set: {
+              tags: [...GameTagsGenerator(credit.tags)]
+            }
+          })
+      }
+
+      await bulk.execute().catch(() => {})
 
       if (credit === null) break
-
-      bulk
-        .find({ bggId: credit.bggId })
-        .updateOne({
-          $set: {
-            tags: [...GameTagsGenerator(credit.tags)]
-          }
-        })
     }
-
-    await bulk.execute().catch(() => {})
 
     res.status(200).json({
       statusCode: 200,
@@ -51,5 +56,6 @@ export async function handler (
     if (meta.ac === ac) {
       meta.ac = null
     }
+    await mongoClient.close()
   }
 }
